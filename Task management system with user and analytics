@@ -1,7 +1,10 @@
 package com.example.taskmanager;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+
 @SpringBootApplication
+
 public class TaskManagerApplication{
     public static void main(String[] args){
         SpringApplication.run(TaskManagerApplication.class, args);
@@ -9,6 +12,7 @@ public class TaskManagerApplication{
 }
 
 package com.example.taskmanager.controller;
+
 import com.example.taskmanager.entity.User;
 import com.example.taskmanager.service.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/users")
+
 public class UserController {
     private final UserService service;
     public UserController(UserService service) {
@@ -34,6 +39,7 @@ public class UserController {
 }
 
 package com.example.taskmanager.controller;
+
 import com.example.taskmanager.entity.Task;
 import com.example.taskmanager.service.TaskService;
 import org.springframework.web.bind.annotation.*;
@@ -41,6 +47,7 @@ import org.springframework.data.domain.Page;
 
 @RestController
 @RequestMapping("/tasks")
+
 public class TaskController {
     private final TaskService service;
     public TaskController(TaskService service) {
@@ -63,6 +70,7 @@ public class TaskController {
 }
 
 package com.example.taskmanager.controller;
+
 import com.example.taskmanager.entity.Task;
 import com.example.taskmanager.repository.TaskRepository;
 import org.springframework.web.bind.annotation.*;
@@ -71,6 +79,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/analytics")
+
 public class AnalyticsController {
     private final TaskRepository repo;
     public AnalyticsController(TaskRepository repo) {
@@ -78,6 +87,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/user/{userId}")
+
     public Map<String, Long> stats(@PathVariable Long userId) {
 
         List<Task> tasks = repo.findAll();
@@ -101,6 +111,7 @@ public class AnalyticsController {
 }
 
 package com.example.taskmanager.service;
+
 import com.example.taskmanager.entity.User;
 import com.example.taskmanager.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -108,6 +119,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+
 public class UserService {
     private final UserRepository repo;
     public UserService(UserRepository repo) {
@@ -124,13 +136,16 @@ public class UserService {
 }
 
 package com.example.taskmanager.service;
+
 import com.example.taskmanager.entity.Task;
 import com.example.taskmanager.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.*;
 
 @Service
+
 public class TaskService {
+
     private final TaskRepository repo;
     public TaskService(TaskRepository repo) {
         this.repo = repo;
@@ -146,6 +161,7 @@ public class TaskService {
 }
 
 package com.example.taskmanager.repository;
+
 import com.example.taskmanager.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -153,6 +169,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 }
 
 package com.example.taskmanager.repository;
+
 import com.example.taskmanager.entity.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
@@ -179,6 +196,7 @@ public class User {
 }
 
 package com.example.taskmanager.entity;
+
 import jakarta.persistence.*;
 import lombok.Data;
 
