@@ -1,0 +1,281 @@
+package com.example.taskmanager;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+
+public class TaskManagerApplication{
+    public static void main(String[] args){
+        SpringApplication.run(TaskManagerApplication.class, args);
+    }
+}
+
+package com.example.taskmanager.controller;
+
+import com.example.taskmanager.entity.User;
+import com.example.taskmanager.service.UserService;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/users")
+
+public class UserController {
+    private final UserService service;
+    public UserController(UserService service) {
+        this.service = service;
+    }
+
+    @PostMapping
+    public User create(@RequestBody User user) {
+        return service.create(user);
+    }
+
+    @GetMapping
+    public List<User> getAll() {
+        return service.getAll();
+    }
+}
+
+package com.example.taskmanager.controller;
+
+import com.example.taskmanager.entity.Task;
+import com.example.taskmanager.service.TaskService;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+
+@RestController
+@RequestMapping("/tasks")
+
+public class TaskController {
+    private final TaskService service;
+    public TaskController(TaskService service) {
+        this.service = service;
+    }
+
+    @PostMapping
+    public Task create(@RequestBody Task task) {
+        return service.create(task);
+    }
+
+    @GetMapping
+    public Page<Task> getTasks(
+            @RequestParam String status,
+            @RequestParam int page,
+            @RequestParam int size
+    ) {
+        return service.getTasks(status, page, size);
+    }
+}
+
+package com.example.taskmanager.controller;
+
+import com.example.taskmanager.entity.Task;
+import com.example.taskmanager.repository.TaskRepository;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.*;
+
+@RestController
+@RequestMapping("/analytics")
+
+public class AnalyticsController {
+    private final TaskRepository repo;
+    public AnalyticsController(TaskRepository repo) {
+        this.repo = repo;
+    }
+
+    @GetMapping("/user/{userId}")
+
+    public Map<String, Long> stats(@PathVariable Long userId) {
+
+        List<Task> tasks = repo.findAll();
+
+        long completed = tasks.stream()
+                .filter(t -> t.getUser().getId().equals(userId))
+                .filter(t -> "COMPLETED".equals(t.getStatus()))
+                .count();
+
+        long pending = tasks.stream()
+                .filter(t -> t.getUser().getId().equals(userId))
+                .filter(t -> "PENDING".equals(t.getStatus()))
+                .count();
+
+        Map<String, Long> map = new HashMap<>();
+        map.put("completed", completed);
+        map.put("pending", pending);
+
+        return map;
+    }
+}
+
+package com.example.taskmanager.service;
+
+import com.example.taskmanager.entity.User;
+import com.example.taskmanager.repository.UserRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+
+public class UserService {
+    private final UserRepository repo;
+    public UserService(UserRepository repo) {
+        this.repo = repo;
+    }
+
+    public User create(User user) {
+        return repo.save(user);
+    }
+
+    public List<User> getAll() {
+        return repo.findAll();
+    }
+}
+
+package com.example.taskmanager.service;
+
+import com.example.taskmanager.entity.Task;
+import com.example.taskmanager.repository.TaskRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.data.domain.*;
+
+@Service
+
+public class TaskService {
+
+    private final TaskRepository repo;
+    public TaskService(TaskRepository repo) {
+        this.repo = repo;
+    }
+     public Task create(Task task) {
+        return repo.save(task);
+    }
+
+    public Page<Task> getTasks(String status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        return repo.findByStatus(status, pageable);
+    }
+}
+
+package com.example.taskmanager.repository;
+
+import com.example.taskmanager.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+}
+
+package com.example.taskmanager.repository;
+
+import com.example.taskmanager.entity.Task;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+public interface TaskRepository extends JpaRepository<Task, Long> {
+    Page<Task> findByStatus(String status, Pageable pageable);
+}
+
+package com.example.taskmanager.entity;
+import jakarta.persistence.*;
+import lombok.Data;
+
+@Entity
+@Data
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    private String email;
+}
+
+package com.example.taskmanager.entity;
+
+import jakarta.persistence.*;
+import lombok.Data;
+
+@Entity
+@Data
+public class Task {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String title;
+    private String status;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+}
+
+spring.datasource.url=jdbc:mysql://localhost:3306/taskdb
+spring.datasource.username=root
+spring.datasource.password=yourpassword
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+
+# Task Manager API
+
+## Setup
+1. Create DB: taskdb
+2. Update DB credentials
+3. Run:
+   mvn spring-boot:run
+
+## APIs
+POST /users
+GET /users
+POST /tasks
+GET /tasks?status=PENDING&page=0&size=5
+GET /analytics/user/{id}
+
+mvn clean install
+mvn spring-boot:run
+
+Pom.xml
+
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example</groupId>
+  <artifactId>taskmanager</artifactId>
+  <version>1.0</version>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.2.0</version>
+  </parent>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
+  </dependencies>
+</project>
